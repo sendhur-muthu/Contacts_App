@@ -1,4 +1,4 @@
-package com.sendhur.contactsapp.presentation.screens.contacts
+package com.sendhur.contactsapp.presentation.screens.contacts.state
 
 import com.sendhur.contactsapp.domain.model.Contact
 

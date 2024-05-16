@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sendhur.contactsapp.presentation.screens.contact_detail.ContactDetailScreen
 import com.sendhur.contactsapp.presentation.screens.contacts.ContactsScreen
 
 @Composable
@@ -12,6 +13,9 @@ fun Navigation() {
     NavHost(navController = navController, startDestination = Screen.ContactsScreen.route) {
         composable(route = Screen.ContactsScreen.route) {
             ContactsScreen(navController = navController)
+        }
+        composable(route = Screen.ContactDetailScreen.route + "/{contactId}") {
+            ContactDetailScreen(navController = navController)
         }
     }
 }

@@ -8,4 +8,11 @@
     <string name="allow_permissions_to_read_phone_contacts">Allow permissions to read phone contacts</string>
     <string name="if_the_cta_is_not_working_you_might_ve_denied_permission_multiple_times_kindly_enable_permission_from_app_setting">If the CTA is not working, you might\'ve denied permission multiple times. Kindly enable permission from App setting!</string>
     <string name="retry">Retry</string>
+    <string name="search_contacts">Search Contacts</string>
+    <string name="clear">Clear</string>
+    <string name="search_not_found">Search not found!</string>
+    <string name="back">Back</string>
+    <string name="edit">Edit</string>
+    <string name="save">Save</string>
+    <string name="add_contact">Add contact</string>
 </resources>

@@ -40,7 +40,7 @@ class ContactRemoteMediator(
             )
             contactsDatabase.withTransaction {
                 if (loadType == LoadType.REFRESH) {
-                    contactsDatabase.dao.clearAll()
+                    contactsDatabase.dao.deleteRandomContacts()
                 }
                 val contactEntities = contacts.results.map { it.toContactEntity() }
                 contactsDatabase.dao.upsertAll(contactEntities)

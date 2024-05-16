@@ -18,7 +18,7 @@ import com.sendhur.contactsapp.presentation.ErrorMessage
 import com.sendhur.contactsapp.presentation.PaginationLoader
 
 @Composable
-fun ApiContacts(contacts: LazyPagingItems<Contact>, navController: NavController) {
+fun ApiContacts(contacts: LazyPagingItems<Contact>, onContactClicked: (Int) -> Unit) {
     val context = LocalContext.current
     LaunchedEffect(key1 = contacts.loadState) {
         if (contacts.loadState.refresh is LoadState.Error) {
@@ -34,16 +34,11 @@ fun ApiContacts(contacts: LazyPagingItems<Contact>, navController: NavController
             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                /*items(contacts) { contact ->
-                    ContactItem(contact = contact) {
-                        //navController.navigate(Screen.ContactDetailScreen.route + "/${contact.id}")
-                    }
-                }*/
                 items(contacts.itemCount) {
                     val contact = contacts[it]
                     if (contact != null) {
-                        ContactItem(contact = contact) {
-                            //navController.navigate(Screen.ContactDetailScreen.route + "/${contact.id}")
+                        ContactItem(contact = contact) { selectedContact ->
+                            onContactClicked(selectedContact.id)
                         }
                     }
                 }

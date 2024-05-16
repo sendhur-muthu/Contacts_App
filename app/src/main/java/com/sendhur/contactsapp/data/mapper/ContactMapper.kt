@@ -30,18 +30,20 @@ fun ContactsDto.Result.toContactEntity(): ContactEntity {
 
 fun ContactEntity.toContact(): Contact {
     return Contact(
+        id = id,
         cell = cell,
         email = email,
         gender = gender,
         name = name,
         phone = phone,
         picture = picture,
-        isPhoneContact = false
+        isPhoneContact = isPhoneContact
     )
 }
 
 fun Contact.toContactEntity(): ContactEntity {
     return ContactEntity(
+        id = id,
         cell = cell,
         email = email,
         gender = gender,

@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.room.Room
 import com.sendhur.contactsapp.common.Constants
 import com.sendhur.contactsapp.data.local.ContactEntity
+import com.sendhur.contactsapp.data.local.ContactsDao
 import com.sendhur.contactsapp.data.local.ContactsDatabase
 import com.sendhur.contactsapp.data.remote.ApiInterface
 import com.sendhur.contactsapp.data.remote.ContactRemoteMediator
@@ -43,8 +44,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providesContactsRepository(apiInterface: ApiInterface): ContactsRepository {
-        return ContactsRepositoryImpl(apiInterface)
+    fun providesContactsRepository(
+        apiInterface: ApiInterface,
+        contactsDatabase: ContactsDatabase
+    ): ContactsRepository {
+        return ContactsRepositoryImpl(apiInterface, contactsDatabase.dao, contactsDatabase)
     }
 
     @Provides

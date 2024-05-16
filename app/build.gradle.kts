@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.extended.material3)
+    implementation(libs.material.window.size)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -88,4 +90,6 @@ dependencies {
     kapt(libs.room.compiler)
     implementation(libs.room.kotlin)
     implementation(libs.room.paging)
+
+    implementation(libs.accompanist.adaptive)
 }

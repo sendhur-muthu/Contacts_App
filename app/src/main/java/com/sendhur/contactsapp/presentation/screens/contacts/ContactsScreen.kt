@@ -8,16 +8,37 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -27,22 +48,26 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.sendhur.contactsapp.R
 import com.sendhur.contactsapp.domain.model.Contact
 import com.sendhur.contactsapp.presentation.ContentText
+import com.sendhur.contactsapp.presentation.navigation.Screen
 import com.sendhur.contactsapp.presentation.screens.contacts.components.ApiContacts
+import com.sendhur.contactsapp.presentation.screens.contacts.components.ContactItem
 import com.sendhur.contactsapp.presentation.screens.contacts.components.PhoneContacts
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     navController: NavController,
     viewModel: ContactsViewModel = hiltViewModel()
 ) {
     val phoneContactsState = viewModel.phoneContactsState.value
+    val searchState = viewModel.searchState.value
     val context = LocalContext.current
     val pagerState = rememberPagerState {
         2
     }
     val coroutineScope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
     val tabItems =
         listOf(stringResource(R.string.random_contacts), stringResource(R.string.phone_contacts))
     val launcher =
@@ -55,36 +80,145 @@ fun ContactsScreen(
                 viewModel.updatePhoneContactsError(context.getString(R.string.permission_not_allowed))
             }
         }
-    Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = pagerState.currentPage) {
-            tabItems.forEachIndexed { index, title ->
-                Tab(selected = pagerState.currentPage == index,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    text = {
-                        ContentText(text = title)
-                    }
+    var text by remember {
+        mutableStateOf("")
+    }
+    var active by remember {
+        mutableStateOf(false)
+    }
+    var searchClicked by remember {
+        mutableStateOf(false)
+    }
+    if (!active) {
+        text = ""
+        viewModel.refreshSearch()
+    }
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                navController.navigate(Screen.ContactDetailScreen.route + "/0")
+            }, modifier = Modifier.padding(20.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = stringResource(R.string.add_contact)
                 )
             }
         }
-        val contacts = viewModel.contactPagingFlow.collectAsLazyPagingItems()
-        HorizontalPager(state = pagerState, pageSpacing = 10.dp) {
-            when (it) {
-                0 -> ApiContacts(contacts, navController)
-                1 -> {
-                    requestPermission(context, viewModel, launcher)
-                    PhoneContacts(state = phoneContactsState, onContactClicked = {
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(10.dp)
+        ) {
+            SearchBar(
+                query = text,
+                modifier = Modifier.fillMaxWidth(),
+                onQueryChange = {
+                    searchClicked = false
+                    text = it
+                },
+                onSearch = {
+                    viewModel.searchContacts(it)
+                    searchClicked = true
+                    keyboardController?.hide()
+                },
+                active = active,
+                onActiveChange = {
+                    if (!it) {
+                        searchClicked = false
+                    }
+                    active = it
+                },
+                placeholder = {
+                    ContentText(text = stringResource(id = R.string.search_contacts))
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = stringResource(id = R.string.search_contacts)
+                    )
+                },
+                trailingIcon = {
+                    if (active) {
+                        Icon(
+                            modifier = Modifier.clickable {
+                                if (text.isNotEmpty()) {
+                                    text = ""
+                                } else {
+                                    active = false
+                                }
+                                viewModel.refreshSearch()
+                            },
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(id = R.string.clear)
+                        )
+                    }
+                }
+            ) {
+                if (searchState.contacts.isNotEmpty()) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(searchState.contacts) {
+                            ContactItem(
+                                contact = it,
+                                showPhoneContactsIcon = true
+                            ) { selectedContact ->
+                                navigateToDetails(navController, selectedContact.id)
+                            }
+                        }
+                    }
+                } else if (text.isNotEmpty() && searchState.contacts.isEmpty() && searchClicked) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        ContentText(
+                            text = stringResource(R.string.search_not_found),
+                            modifier = Modifier.align(
+                                Alignment.Center
+                            )
+                        )
+                    }
+                }
+            }
+            TabRow(selectedTabIndex = pagerState.currentPage) {
+                tabItems.forEachIndexed { index, title ->
+                    Tab(selected = pagerState.currentPage == index,
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
+                        text = {
+                            ContentText(text = title)
+                        }
+                    )
+                }
+            }
+            val contacts = viewModel.contactPagingFlow.collectAsLazyPagingItems()
+            if (!viewModel.isPhoneContactsRetrieved) {
+                requestPermission(context, viewModel, launcher)
+            }
+            HorizontalPager(state = pagerState, pageSpacing = 10.dp) {
+                when (it) {
+                    0 -> ApiContacts(contacts) { selectedContactId ->
+                        navigateToDetails(navController, selectedContactId)
+                    }
 
-                    }) {
-                        requestPermission(context, viewModel, launcher)
+                    1 -> {
+                        PhoneContacts(
+                            state = phoneContactsState,
+                            onContactClicked = { selectedContactId ->
+                                navigateToDetails(navController, selectedContactId)
+                            }) {
+                            requestPermission(context, viewModel, launcher)
+                        }
                     }
                 }
             }
         }
     }
+}
+
+fun navigateToDetails(navController: NavController, id: Int) {
+    navController.navigate(Screen.ContactDetailScreen.route + "/${id}")
 }
 
 fun requestPermission(
